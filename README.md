@@ -5,7 +5,8 @@
 
 ### REQUERIMIENTOS
 - Se utilizo vscode con la extension de r y rmarkdown
-- Archivo .rmd 
+- Archivo .rmd
+- R - Notebook vscode
 
 # Introducción
 
