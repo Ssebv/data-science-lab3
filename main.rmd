@@ -17,17 +17,16 @@ clc <- function() cat(rep("\n", 50)) # Esta función limpia la consola
 ## Descrición de las variables
 
 ```{r}
-# Seleccionar tres variables categóricas con al menos 3 niveles cada una
 variables_categoricas <- c("school", "sex", "address")
-# Definir las variables independientes que deseas analizar
+
 variables_independientes <- c("G1", "G2", "absences", "failures", "studytime", "freetime", "goout", "Dalc", "Walc", "health", "age") # nolint
 
-variable_dependiente <- "G3"  # Puedes cambiar esta variable
+variable_dependiente <- "G3"
 
-residuos <- list()  # Crear una lista para almacenar los residuos
+residuos <- list()
 ```
 
-## Prueba de Supuestos
+## Normalidad
 
 ### Histograma G3 sin transformar
 
@@ -35,11 +34,30 @@ residuos <- list()  # Crear una lista para almacenar los residuos
 
 # Histograma de G3
 hist(datos$G3, main = "Distribución de Calificaciones Finales (G3)", xlab = "Calificación Final (G3)", ylab = "Frecuencia" ) # # nolint
+
+# Valores iniciales que deseas resaltar
+valor_atipico1 <- min(datos$G3)
+valor_atipico2 <- max(datos$G3)
+
+# Agregar líneas verticales para resaltar valores iniciales
+abline(v = valor_atipico1, col = "red", lty = 2)
+abline(v = valor_atipico2, col = "blue", lty = 2)
+
+# Leyenda para valores atípicos
+legend("topright", legend = c("Valor Atípico 1", "Valor Atípico 2"), col = c("red", "blue"), lty = 2) # nolint
+
 ```
+
+### Boxplot G3 sin transformar
+
+```{r boxplot-G3, echo=TRUE, fig.height=4, fig.width=6}
+boxplot(datos$G3, main = "Distribución de Calificaciones Finales (G3)", ylab = "Calificación Final (G3)") # nolint
+```
+
 
 El histograma de G3 muestra una forma de campana, lo que sugiere una distribución aproximadamente normal, pero también destaca la presencia de valores iniciales que pueden estar afectando la normalidad aparente de la distribución.
 
-### Prueba shapiro-wilk de G3 sin transformar
+### Prueba shapiro-wilk para G3 sin transformar
 ```{r}
 shapiro.test(datos$G3)
 ```
@@ -47,25 +65,87 @@ shapiro.test(datos$G3)
 W = 0.92598, p-value < 2.2e-16
 
 Segun la prueba de Shapiro-Wilk podemos decir que la variable G3 no sigue una distribución normal dado que el p-value es menor a 0.05
+Segun el teorema este se aplica a una cantidad menor a 50 
 
-### Prueba de Anderson-Darling para normalidad
+### Prueba Anderson-Darling para G3 sin transformar
 ```{r}
-if (!require(nortest)) {
+if (!require(nortest)) { # Forma para descargar e instalar un paquete en caso de que no esté instalado en VSC # nolint
   install.packages("nortest")
   library(nortest)
 }
-# Prueba de Anderson-Darling para normalidad
-ad.test(datos$G3)
+
+ad.test(datos$G3) # Prueba de Anderson-Darling
 ```
 
 A = 8.2336, p-value < 2.2e-16
 
 Segun la prueba de Anderson-Darling podemos decir que la variable G3 no sigue una distribución normal dado que el p-value es menor a 0.05
 
-## Anova para G3 sin transformar a partir de las variables independientes
-```{r}
+### Eliminar valores atípicos
 
-# Crear una lista para almacenar los resultados de los ANOVAs
+```{r}  
+# Eliminar valores atípicos
+datos <- datos[datos$G3 != valor_atipico1, ]
+datos <- datos[datos$G3 != valor_atipico2, ]
+
+# Verificar la distribución después de eliminar valores atípicos
+hist(datos$G3, main = "Distribución de Calificaciones Finales (G3)", xlab = "Calificación Final (G3)", ylab = "Frecuencia") # nolint
+```
+
+### Prueba de Shapiro-Wilk para G3 sin transformar despues de eliminar valores atipicos
+```{r}
+shapiro.test(datos$G3)
+```
+
+W = 0.97523, p-value = 7.387e-09
+
+Incluso despues de eliminar los valores atipicos, la prueba de Shapiro-Wilk nos indica que la variable G3 no sigue una distribución normal dado que el p-value es menor a 0.05
+
+## Homocedasticidad
+
+### Prueba de Levene para G3 
+
+```{r}
+if (!require(car)) {
+  install.packages("car")
+  library(car)
+}
+```
+
+```{r}
+# Realizar la prueba de Levene para G3 vs. school
+levene_test <- leveneTest(datos$G3 ~ datos$school) # Aqui podria ser cualquier variable categórica de interes # nolint
+
+cat("Resultados de la Prueba de Levene para G3 vs. school:\n")
+levene_test  # No es necesario usar print aquí
+
+cat("\n")
+
+# Verificar homogeneidad de varianzas
+if (levene_test$`Pr(>F)`[1] < 0.05) {
+  cat("La Prueba de Levene indica heterocedasticidad (p-value <", levene_test$`Pr(>F)`[1], ")\n") # nolint
+} else {
+  cat("La Prueba de Levene no indica heterocedasticidad (p-value =", levene_test$`Pr(>F)`[1], ")\n") # nolint
+}
+
+# Realizar ANOVA para G3 sin transformar
+formula_anova_G3 <- as.formula("G3 ~ 1")  # nolint
+resultado_anova_G3 <- aov(formula_anova_G3, data = datos) # nolint
+
+# Imprimir resultados del ANOVA para G3 sin transformar
+cat("Resultados ANOVA para G3")
+summary(resultado_anova_G3)
+```
+
+             <!-- Df Sum Sq Mean Sq F value Pr(>F)
+Residuals   615   3849   6.258       -->
+
+Segun los resultados de la prueba de Levene, se observa que el valor p es mayor a 0.05, lo que sugiere que no hay evidencia estadística para rechazar la hipótesis nula de homogeneidad de varianzas.
+Por lo tanto, podemos concluir que no hay heterocedasticidad significativa en la variable G3 en función de la variable categórica school.
+
+##  Anova
+    
+```{r}
 resultados_anova <- list()
 
 # Realizar un bucle para realizar ANOVAs para cada variable independiente
@@ -83,6 +163,9 @@ for (variable in variables_independientes) {
 }
 ```
 
+Se realizo un analisis de varianza ANOVA para determinar si existe una diferencia significativa de la variable dependiente G3 en funcion de cada una de las variables independientes.
+Donde se podra utilizar para comprender si las variables independientes son estadísticamente significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo.
+
 Según los resultados de los ANOVAs, se observa que las siguientes variables tienen un valor p menor a 0.05, lo que indica que son significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo: 
 G1, G2, absences, failures, studytime, goout, Dalc, Walc, health y age
 
@@ -93,7 +176,7 @@ Específicamente, las siguientes variables son las que tienen p-valores signific
     - 'health' (p-valor = 0.0117)
     - age' (p-valor = 0.00661) 
 
-Por lo tanto, podemos concluir que estas variables son estadísticamente significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo, mientras que las demás no aportan evidencia estadística significativa en relación con G3.
+Por lo tanto, podemos concluir que estas variables son estadísticamente significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo, mientras que las demás no aportan evidencia estadística significativa.
 
 ## Transformación logaritmica de la variable G3 para normalizarla
 
@@ -119,11 +202,7 @@ if (shapiro_test_result_transformed$p.value < 0.05) {
 }
 ```
 
-W = 0.56136, p-value < 2.2e-16
-
-Al realizar la prueba de Shapiro-Wilk nuevamente, se observa que el valor p es menor a 0.05, lo que indica que la variable G3_transformed no sigue una distribución normal.
-Para este caso no se realizaran mas transformaciones.
-
+Según la prueba de Shapiro-Wilk, G3 transformada no sigue una distribución normal (p-value < 1.099225e-16 )
 
 ## Boxplot de residuos vs. variables categóricas
 
@@ -177,28 +256,54 @@ par(mfrow = c(1, 1)) # Restaurar la disposición de gráficos
 
 ```
 
-Tambien se puede apreciar que los residuos tienen una dispersión similar para las variables independientes, por lo que se podria cumplir el supuesto de homocedasticidad. pero en G1, G2 y absences se puede apreciar que los residuos tienen una dispersión diferente, por lo que no se cumple el supuesto de homocedasticidad.
-
+Tambien se puede apreciar que los residuos tienen una dispersión similar para las variables independientes, por lo que se podria cumplir el supuesto de homocedasticidad.
+pero en G1, G2 y absences se puede apreciar que los residuos tienen una dispersión diferente, por lo que no se cumple el supuesto de homocedasticidad.
 
 ### Independencia de observaciones
 
 ```{r}
-# Establecer el diseño de la matriz para los gráficos
-par(mfrow = c(3, 4))
+# Ajustar el modelo lineal para G3
+modelo_G3 <- lm(G3 ~ ., data = datos)
 
-# Crear gráficos de residuos vs. número de observación para todas las variables independientes # nolint
-for (i in seq_along(variables_independientes)) {
-  variable <- variables_independientes[i]
-  if (all(is.finite(residuos_independientes[[variable]]))) {
-    plot(num_observacion, residuos_independientes[[variable]],
-         main = paste("Residuos vs. Número de Observación -", variable),
-         xlab = "Número de Observación", ylab = "Residuos")
-  } else {
-         cat("No se pudo crear el gráfico para", variable, "debido a valores no finitos en los residuos.\n") # nolint
-  }
-}
+# Obtener los residuos y los valores ajustados
+residuos_G3 <- resid(modelo_G3)
+valores_ajustados_G3 <- fitted(modelo_G3)
 
-# Restaurar la disposición de gráficos
-par(mfrow = c(1, 1))
+# Crear un gráfico de residuos vs. valores ajustados
+plot(valores_ajustados_G3, residuos_G3, main = "Residuos vs. Valores Ajustados",
+     xlab = "Valores Ajustados (G3)", ylab = "Residuos")
+
+# Puedes agregar líneas horizontales en y = 0 para facilitar la visualización de patrones
+abline(h = 0, col = "red", lty = 2)
 ```
+
+
+```{r}
+# Crear un gráfico de residuos vs. número de observación para el modelo completo
+plot(seq_along(datos$G3), residuos_G3, main = "Residuos vs. Número de Observación",
+     xlab = "Número de Observación", ylab = "Residuos")
+``` 
+
+Con esto se puede apreciar que los residuos no tienen una distribución normal, por lo que no se cumple el supuesto de independencia de observaciones.
+
+
+## Ivestigacion sobre ANOVA
+
+Anova es un método estadístico que se utiliza para probar las diferencias entre dos o más medias. ANOVA se utiliza para probar la hipótesis nula de que las medias de dos o más grupos son iguales. ANOVA se utiliza en estadísticas, genética, ciencias de la conducta y otras áreas.
+Un ejemplo de ANOVA es el siguiente:
+
+Para este caso de 3 calificaciones de 3 escuelas diferentes, se quiere saber si existe una diferencia significativa entre las calificaciones de las 3 escuelas. Para esto se realiza un ANOVA para determinar si existe una diferencia significativa de la variable dependiente G3 en funcion de cada una de las variables independientes. Donde se podra utilizar para comprender si las variables independientes son estadísticamente significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo.
+
+## Conclusiones
+
+- Se verifico si la variable G3 sigue una distribución normal, para esto se realizo un histograma y un boxplot, donde se observo que la variable G3 no sigue una distribución normal.
+- Tambien se realizo la prueba de Shapiro-Wilk para verificar la normalidad de la variable G3, donde se observo que el valor p es menor a 0.05, lo que indica que la variable G3 no sigue una distribución normal.
+- Se realizo un analisis de varianza ANOVA para determinar si existe una diferencia significativa de la variable dependiente G3 en funcion de cada una de las variables independientes.
+- Segun los resultados de los ANOVAs, se observa que las siguientes variables tienen un valor p menor a 0.05, lo que indica que son significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo:
+    - 'absences' (p-valor = 0.0199)
+    - 'freetime' (p-valor = 0.00174)
+    - 'goout' (p-valor = 0.0256)
+    - 'health' (p-valor = 0.0117)
+    - age' (p-valor = 0.00661)
+
 
