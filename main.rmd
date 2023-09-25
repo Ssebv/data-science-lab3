@@ -10,8 +10,6 @@ Nuestro objetivo principal es entender qué factores influyen en las calificacio
 ```{r}
 datos <- read.csv("student-por.csv")
 head(datos)
-clc <- function() cat(rep("\n", 50)) # Esta función limpia la consola
-
 ```
 
 ## Descrición de las variables
@@ -26,26 +24,12 @@ variable_dependiente <- "G3"
 residuos <- list()
 ```
 
-## Normalidad
+## Verificar normalidad
 
 ### Histograma G3 sin transformar
 
 ```{r histogram-G3, echo=TRUE, fig.height=4, fig.width=6}
-
-# Histograma de G3
 hist(datos$G3, main = "Distribución de Calificaciones Finales (G3)", xlab = "Calificación Final (G3)", ylab = "Frecuencia" ) # # nolint
-
-# Valores iniciales que deseas resaltar
-valor_atipico1 <- min(datos$G3)
-valor_atipico2 <- max(datos$G3)
-
-# Agregar líneas verticales para resaltar valores iniciales
-abline(v = valor_atipico1, col = "red", lty = 2)
-abline(v = valor_atipico2, col = "blue", lty = 2)
-
-# Leyenda para valores atípicos
-legend("topright", legend = c("Valor Atípico 1", "Valor Atípico 2"), col = c("red", "blue"), lty = 2) # nolint
-
 ```
 
 ### Boxplot G3 sin transformar
@@ -54,19 +38,6 @@ legend("topright", legend = c("Valor Atípico 1", "Valor Atípico 2"), col = c("
 boxplot(datos$G3, main = "Distribución de Calificaciones Finales (G3)", ylab = "Calificación Final (G3)") # nolint
 ```
 
-
-El histograma de G3 muestra una forma de campana, lo que sugiere una distribución aproximadamente normal, pero también destaca la presencia de valores iniciales que pueden estar afectando la normalidad aparente de la distribución.
-
-### Prueba shapiro-wilk para G3 sin transformar
-```{r}
-shapiro.test(datos$G3)
-```
-
-W = 0.92598, p-value < 2.2e-16
-
-Segun la prueba de Shapiro-Wilk podemos decir que la variable G3 no sigue una distribución normal dado que el p-value es menor a 0.05
-Segun el teorema este se aplica a una cantidad menor a 50 
-
 ### Prueba Anderson-Darling para G3 sin transformar
 ```{r}
 if (!require(nortest)) { # Forma para descargar e instalar un paquete en caso de que no esté instalado en VSC # nolint
@@ -74,32 +45,23 @@ if (!require(nortest)) { # Forma para descargar e instalar un paquete en caso de
   library(nortest)
 }
 
-ad.test(datos$G3) # Prueba de Anderson-Darling
+# Realizar la prueba de Anderson Darling
+ad_test_result <- ad.test(datos$G3) # nolint
+print(ad_test_result)
 ```
 
-A = 8.2336, p-value < 2.2e-16
+A = 5.7993, p-value = 2.744e-14
 
-Segun la prueba de Anderson-Darling podemos decir que la variable G3 no sigue una distribución normal dado que el p-value es menor a 0.05
+Segun la prueba de Anderson-Darling podemos decir que la variable G3 no sigue una distribución normal dado que el p-value es menor a 0.05 y tiene una gran diferencia con el valor de prueba del estadistico.
 
 ### Eliminar valores atípicos
 
 ```{r}  
-# Eliminar valores atípicos
-datos <- datos[datos$G3 != valor_atipico1, ]
-datos <- datos[datos$G3 != valor_atipico2, ]
+datos <- datos[datos$G3 != valor_atipico1]
+datos <- datos[datos$G3 != valor_atipico2]
 
-# Verificar la distribución después de eliminar valores atípicos
 hist(datos$G3, main = "Distribución de Calificaciones Finales (G3)", xlab = "Calificación Final (G3)", ylab = "Frecuencia") # nolint
 ```
-
-### Prueba de Shapiro-Wilk para G3 sin transformar despues de eliminar valores atipicos
-```{r}
-shapiro.test(datos$G3)
-```
-
-W = 0.97523, p-value = 7.387e-09
-
-Incluso despues de eliminar los valores atipicos, la prueba de Shapiro-Wilk nos indica que la variable G3 no sigue una distribución normal dado que el p-value es menor a 0.05
 
 ## Homocedasticidad
 
@@ -110,18 +72,13 @@ if (!require(car)) {
   install.packages("car")
   library(car)
 }
-```
-
-```{r}
 # Realizar la prueba de Levene para G3 vs. school
 levene_test <- leveneTest(datos$G3 ~ datos$school) # Aqui podria ser cualquier variable categórica de interes # nolint
 
 cat("Resultados de la Prueba de Levene para G3 vs. school:\n")
 levene_test  # No es necesario usar print aquí
-
 cat("\n")
 
-# Verificar homogeneidad de varianzas
 if (levene_test$`Pr(>F)`[1] < 0.05) {
   cat("La Prueba de Levene indica heterocedasticidad (p-value <", levene_test$`Pr(>F)`[1], ")\n") # nolint
 } else {
@@ -132,7 +89,6 @@ if (levene_test$`Pr(>F)`[1] < 0.05) {
 formula_anova_G3 <- as.formula("G3 ~ 1")  # nolint
 resultado_anova_G3 <- aov(formula_anova_G3, data = datos) # nolint
 
-# Imprimir resultados del ANOVA para G3 sin transformar
 cat("Resultados ANOVA para G3")
 summary(resultado_anova_G3)
 ```
@@ -143,8 +99,7 @@ Residuals   615   3849   6.258       -->
 Segun los resultados de la prueba de Levene, se observa que el valor p es mayor a 0.05, lo que sugiere que no hay evidencia estadística para rechazar la hipótesis nula de homogeneidad de varianzas.
 Por lo tanto, podemos concluir que no hay heterocedasticidad significativa en la variable G3 en función de la variable categórica school.
 
-##  Anova
-    
+##  ANOVA
 ```{r}
 resultados_anova <- list()
 
@@ -174,7 +129,7 @@ Específicamente, las siguientes variables son las que tienen p-valores signific
     - 'freetime' (p-valor = 0.00174)
     - 'goout' (p-valor = 0.0256)
     - 'health' (p-valor = 0.0117)
-    - age' (p-valor = 0.00661) 
+    - 'age' (p-valor = 0.00661) 
 
 Por lo tanto, podemos concluir que estas variables son estadísticamente significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo, mientras que las demás no aportan evidencia estadística significativa.
 
@@ -184,25 +139,8 @@ Por lo tanto, podemos concluir que estas variables son estadísticamente signifi
 constante <- 1  # Puedes ajustar esta constante según sea necesario
 datos$G3_transformed <- log(datos$G3 + constante)
 
-# Verificar la distribución después de la transformación
 hist(datos$G3_transformed, main = "Distribución de Calificaciones Finales Transformadas", xlab = "Calificación Final (G3_transformed)", ylab = "Frecuencia") # nolint
-
-# Realizar la prueba de Shapiro-Wilk nuevamente
-shapiro_test_result_transformed <- shapiro.test(datos$G3_transformed) # nolint
-
-# Mostrar resultado
-cat("\nPrueba de Shapiro-Wilk para normalidad en G3 transformada:\n")
-print(shapiro_test_result_transformed)
-
-# Interpretación
-if (shapiro_test_result_transformed$p.value < 0.05) {
-  cat("Según la prueba de Shapiro-Wilk, G3 transformada no sigue una distribución normal (p-value <", shapiro_test_result_transformed$p.value, ")\n") # nolint
-} else {
-  cat("Según la prueba de Shapiro-Wilk, G3 transformada sigue una distribución normal (p-value =", shapiro_test_result_transformed$p.value, ")\n") # nolint
-}
 ```
-
-Según la prueba de Shapiro-Wilk, G3 transformada no sigue una distribución normal (p-value < 1.099225e-16 )
 
 ## Boxplot de residuos vs. variables categóricas
 
@@ -234,7 +172,6 @@ Al apreciar que los residuos tienen una dispersión similar se podria cumplir el
 ## Boxplot de residuos vs. variables independientes
 
 ```{r}
-# Crear una lista para almacenar los residuos de las variables independientes
 residuos_independientes <- list()
 
 # Ajustar modelos lineales para G3 vs. cada variable independiente y almacenar los residuos # nolint
@@ -273,19 +210,31 @@ valores_ajustados_G3 <- fitted(modelo_G3)
 plot(valores_ajustados_G3, residuos_G3, main = "Residuos vs. Valores Ajustados",
      xlab = "Valores Ajustados (G3)", ylab = "Residuos")
 
-# Puedes agregar líneas horizontales en y = 0 para facilitar la visualización de patrones
+# Para agregar líneas horizontales
 abline(h = 0, col = "red", lty = 2)
 ```
 
 
 ```{r}
-# Crear un gráfico de residuos vs. número de observación para el modelo completo
 plot(seq_along(datos$G3), residuos_G3, main = "Residuos vs. Número de Observación",
      xlab = "Número de Observación", ylab = "Residuos")
 ``` 
 
 Con esto se puede apreciar que los residuos no tienen una distribución normal, por lo que no se cumple el supuesto de independencia de observaciones.
 
+```{r}
+residuos <- residuals(modelo_G3)
+valores_ajustados <- fitted(modelo_G3)
+
+residuos_cuadrados <- residuos^2
+modelo_breusch_pagan <- lm(residuos_cuadrados ~ valores_ajustados)
+
+breusch_pagan_statistic <- summary(modelo_breusch_pagan)$fstatistic[1]
+breusch_pagan_p_value <- 1 - pf(breusch_pagan_statistic, 1, length(residuos) - 2) # nolint
+
+cat("Estadístico de prueba de Breusch-Pagan:", breusch_pagan_statistic, "\n")
+cat("Valor p del test de Breusch-Pagan:", breusch_pagan_p_value, "\n")
+```
 
 ## Ivestigacion sobre ANOVA
 
@@ -297,13 +246,14 @@ Para este caso de 3 calificaciones de 3 escuelas diferentes, se quiere saber si 
 ## Conclusiones
 
 - Se verifico si la variable G3 sigue una distribución normal, para esto se realizo un histograma y un boxplot, donde se observo que la variable G3 no sigue una distribución normal.
-- Tambien se realizo la prueba de Shapiro-Wilk para verificar la normalidad de la variable G3, donde se observo que el valor p es menor a 0.05, lo que indica que la variable G3 no sigue una distribución normal.
+- Por otra parte al revisar los resultados del test de normalidad de Anderson se pudo comprobar que las variables de interes no distribuyen con normalidad pues, se tiene que todos los valores de p, para Age, Medu, G1,G2,G3 son muy pequeños en comparacion al valores del estadistico de prueba que son muy elevados en proporción con lo cual se puede concluir que los datos no siguen una distribución normal.
 - Se realizo un analisis de varianza ANOVA para determinar si existe una diferencia significativa de la variable dependiente G3 en funcion de cada una de las variables independientes.
-- Segun los resultados de los ANOVAs, se observa que las siguientes variables tienen un valor p menor a 0.05, lo que indica que son significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo:
+- Segun los resultados de los ANOVAs, se observa que las siguientes variables tienen un valor p menor a 0.05, lo que i  ndica que son significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo:
+
     - 'absences' (p-valor = 0.0199)
     - 'freetime' (p-valor = 0.00174)
     - 'goout' (p-valor = 0.0256)
     - 'health' (p-valor = 0.0117)
-    - age' (p-valor = 0.00661)
+    - 'age' (p-valor = 0.00661)
 
-
+- Con respecto de la  homocedasticidad o heterocedasticidad, la varianza de los errores no es constante y varia de manera sistemática, pero al aplicar el test de normalidad de Breusch-Pagan se obtuvo que si se cumple el criterio de heterocedasticidad con un p-value = 0.002785 menor que 0.05  En otras palabras, la probabilidad de que la heterocedasticidad sea un hallazgo al azar es muy baja, lo que sugiere que es una característica real de los datos. Donde un valor alto del estadístico de prueba indica que es más probable que haya heterocedasticidad en los residuos.

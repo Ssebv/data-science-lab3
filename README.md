@@ -1,6 +1,11 @@
 ### INTEGRANTES
 - Sebastian Allende
 - Gian Franco Astorga
+- Oscar Horta
+
+### REQUERIMIENTOS
+- Se utilizo vscode con la extension de r y rmarkdown
+- Archivo .rmd 
 
 # Introducción
 
@@ -84,23 +89,18 @@ Como afectaran diferentes variables independientes a la calificación final de l
 
 32. **G2**: Calificación en el segundo período.
 
+# Modelado y Objetivos
+Este conjunto de datos se ha utilizado para tareas de clasificación binaria/de cinco niveles y tareas de regresión. Un aspecto importante es que las calificaciones G3 tienen una fuerte correlación con las calificaciones G2 y G1. Esto se debe a que G3 es la calificación final del último año, mientras que G1 y G2 son calificaciones de los primeros dos períodos. Esta relación es esencial para predecir el rendimiento estudiantil.
 
+# Uso del Conjunto de Datos
+Este conjunto de datos es valioso para llevar a cabo análisis de datos, modelado predictivo y evaluación del rendimiento académico de los estudiantes. Puede ser utilizado en investigaciones educativas y análisis de factores que afectan el éxito académico de los estudiantes en la educación secundaria.
 
+Explica lo que los resultados del test significan en el contexto de tu problema.
+¿Son estadísticamente significativos?
+¿Qué implicaciones tienen?
 
-### Aqui eliminar al final
-### ANOVA en R
+# como la prueba de Breusch-Pagan o la prueba de White.
+El test estadistico de Breusch-Pagan es un análisis de regresión para evaluar la presencia de heterocedasticidad en los residuos de un modelo. La heterocedasticidad se refiere a la situación en la que la varianza de los errores (residuos) no es constante en todos los niveles de las variables predictoras, lo que viola uno de los supuestos clave de la regresión lineal. Se utiliza para determinar si la varianza de los residuos está relacionada con una o más variables independientes del modelo. La presencia de heterocedasticidad puede afectar la eficiencia y validez de las estimaciones de los coeficientes de regresión, los intervalos de confianza y las pruebas de hipótesis.
 
-Dada la base de datos definida más abajo, seleccione tres variables categóricas como variable independiente (factor) con al menos 3 niveles y determine si existen diferencias significativas para la media de edad, educación de la madre, G1, G2 y G3. Esto implica realizar una análisis de varianza para cada par de variable categórica y numérica (3*5=15)
-  
-  Base de datos: https://www.kaggle.com/datasets/larsen0966/student-performance-data-set
-
-Investigar y averiguar la forma de determinar si los supuestos para llevar a cabo ANOVA se complen:
-  1) Normalidad de la variable dependiente
-  2) Homocedasticidad
-  3) Independencia de observaciones.
-
-Determine si se cumplen los supuestos para cada una de los ANOVA realizados en el punto anterior.
-**Entregable**:
- Entregar script en R y Documentos con gráficos / R Notebook
- Indicar nombre de los integrantes en archivo y/o documento
- No usar scripts, módulos o utilidades que realizan todo el análisis en forma automática
+# Anova
+Es una tecnica estadistica utilizada para comparar las variacion de diferentes muestras, poblaciones o grupos y determinar si existen diferencias significativas entre ellas.
