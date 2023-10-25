@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # Laboratorio 3: Analisis de Varianza (ANOVA) en R
 
 ## Introduccion
@@ -57,8 +62,8 @@ Segun la prueba de Anderson-Darling podemos decir que la variable G3 no sigue un
 ### Eliminar valores atípicos
 
 ```{r}  
-datos <- datos[datos$G3 != valor_atipico1]
-datos <- datos[datos$G3 != valor_atipico2]
+#datos <- datos[datos$G3 != valor_atipico1]
+#datos <- datos[datos$G3 != valor_atipico2]
 
 hist(datos$G3, main = "Distribución de Calificaciones Finales (G3)", xlab = "Calificación Final (G3)", ylab = "Frecuencia") # nolint
 ```
@@ -248,7 +253,7 @@ Para este caso de 3 calificaciones de 3 escuelas diferentes, se quiere saber si 
 - Se verifico si la variable G3 sigue una distribución normal, para esto se realizo un histograma y un boxplot, donde se observo que la variable G3 no sigue una distribución normal.
 - Por otra parte al revisar los resultados del test de normalidad de Anderson se pudo comprobar que las variables de interes no distribuyen con normalidad pues, se tiene que todos los valores de p, para Age, Medu, G1,G2,G3 son muy pequeños en comparacion al valores del estadistico de prueba que son muy elevados en proporción con lo cual se puede concluir que los datos no siguen una distribución normal.
 - Se realizo un analisis de varianza ANOVA para determinar si existe una diferencia significativa de la variable dependiente G3 en funcion de cada una de las variables independientes.
-- Segun los resultados de los ANOVAs, se observa que las siguientes variables tienen un valor p menor a 0.05, lo que i  ndica que son significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo:
+- Segun los resultados de los ANOVAs, se observa que las siguientes variables tienen un valor p menor a 0.05, lo que indica que son significativas para explicar las diferencias en las calificaciones finales (G3) en el modelo:
 
     - 'absences' (p-valor = 0.0199)
     - 'freetime' (p-valor = 0.00174)
